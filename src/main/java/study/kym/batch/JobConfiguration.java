@@ -27,13 +27,26 @@ public class JobConfiguration {
         return jobBuilderFactory.get("job")
                 .start(step1())
                 .next(step2())
+                .next(step3())
                 .build();
     }
 
+    /**
+     * StepExecution Test
+     * - stepExecution 하나라도 실패시 JobExecution 도 실패
+     * - step 실패 시 다음 step 은 실행시키지 않음
+     * - jobExecution 이 실패 상태면 job 재실행이 가능
+     */
     @Bean
     public Step step1() {
         return stepBuilderFactory.get("step1")
-                .tasklet(new CustomTasklet())
+                .tasklet(new Tasklet() {
+                    @Override
+                    public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
+                        System.out.println("step1 has executed");
+                        return RepeatStatus.FINISHED;
+                    }
+                })
                 .build();
     }
 
@@ -44,8 +57,20 @@ public class JobConfiguration {
                     @Override
                     public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
                         System.out.println("step2 has executed");
-                        // JobExecution Test
-                        //throw new RuntimeException("step2 has failed");
+                        throw new RuntimeException("step2 has failed");
+                        //return RepeatStatus.FINISHED;
+                    }
+                })
+                .build();
+    }
+
+    @Bean
+    public Step step3() {
+        return stepBuilderFactory.get("step3")
+                .tasklet(new Tasklet() {
+                    @Override
+                    public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
+                        System.out.println("step3 has executed");
                         return RepeatStatus.FINISHED;
                     }
                 })
