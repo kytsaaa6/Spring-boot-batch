@@ -21,6 +21,11 @@ public class JobConfiguration {
 
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
+    private final ExecutionContextTasklet1 executionContextTasklet1;
+    private final ExecutionContextTasklet2 executionContextTasklet2;
+    private final ExecutionContextTasklet3 executionContextTasklet3;
+    private final ExecutionContextTasklet4 executionContextTasklet4;
+
 
     @Bean
     public Job job() {
@@ -28,52 +33,41 @@ public class JobConfiguration {
                 .start(step1())
                 .next(step2())
                 .next(step3())
+                .next(step4())
                 .build();
     }
 
     /**
-     * StepExecution Test
-     * - stepExecution 하나라도 실패시 JobExecution 도 실패
-     * - step 실패 시 다음 step 은 실행시키지 않음
-     * - jobExecution 이 실패 상태면 job 재실행이 가능
+     * ExecutionContext Test
+     * - jobExecution 또는 stepExecution 상태를 저장하는 공유 객체
+     * - jobExecutionContext 은 Job 간 서로 공유 안됨, 모든 Step 이 공유
+     * - stepExecutionContext 은 Step 간 서로 공유 안됨
      */
     @Bean
     public Step step1() {
         return stepBuilderFactory.get("step1")
-                .tasklet(new Tasklet() {
-                    @Override
-                    public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
-                        System.out.println("step1 has executed");
-                        return RepeatStatus.FINISHED;
-                    }
-                })
+                .tasklet(executionContextTasklet1)
                 .build();
     }
 
     @Bean
     public Step step2() {
         return stepBuilderFactory.get("step2")
-                .tasklet(new Tasklet() {
-                    @Override
-                    public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
-                        System.out.println("step2 has executed");
-                        throw new RuntimeException("step2 has failed");
-                        //return RepeatStatus.FINISHED;
-                    }
-                })
+                .tasklet(executionContextTasklet2)
                 .build();
     }
 
     @Bean
     public Step step3() {
         return stepBuilderFactory.get("step3")
-                .tasklet(new Tasklet() {
-                    @Override
-                    public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
-                        System.out.println("step3 has executed");
-                        return RepeatStatus.FINISHED;
-                    }
-                })
+                .tasklet(executionContextTasklet3)
+                .build();
+    }
+
+    @Bean
+    public Step step4() {
+        return stepBuilderFactory.get("step4")
+                .tasklet(executionContextTasklet4)
                 .build();
     }
 }
